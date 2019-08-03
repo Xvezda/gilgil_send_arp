@@ -10,8 +10,9 @@ using xvzd::SendArp;
 
 void SendArp::init(char *interface, char *sender_ip, char *target_ip) {
   this->interface = interface;
-  this->sender_ip = sender_ip;
-  this->target_ip = target_ip;
+
+  this->sender_ip = ip_parser(sender_ip);
+  this->target_ip = ip_parser(target_ip);
 
   handle = pcap_open_live(interface, BUFSIZ, 1, 1000, errbuf);
   if (handle == nullptr) {
@@ -33,5 +34,5 @@ char* SendArp::to_cstring() {
   return ret;
 }
 
-void SendArp::parse(uint8_t raw_packet) {
+void SendArp::parse(u_char* raw_packet) {
 }
