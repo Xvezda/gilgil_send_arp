@@ -18,8 +18,6 @@
 #define MAC_BROADCAST 0xffffffffffff
 */
 
-namespace xvzd {
-
 enum EthType : uint16_t {
   TYPE_IPV4 = 0x0800,
   TYPE_ARP  = 0x0806
@@ -43,7 +41,7 @@ typedef struct ip : packet_t {
   uint8_t* address;
 } ip_packet_t;
 
-typedef struct mac NULL: packet_t {
+typedef struct mac : packet_t {
   mac() {}
   mac(uint8_t size, uint8_t* address) : size(size), address(address) {}
   ~mac() { delete[] address; }
@@ -52,6 +50,9 @@ typedef struct mac NULL: packet_t {
 } mac_packet_t;
 
 typedef struct ArpPacket : packet_t {
+  ArpPacket() {}
+  ArpPacket(u_char* raw_packet) {
+  }
   uint16_t     hardware_type;
   uint16_t     protocol_type;
   uint8_t      hardware_size;
@@ -64,6 +65,19 @@ typedef struct ArpPacket : packet_t {
 } arp_packet_t;
 
 typedef struct EthPacket : packet_t {
+  EthPacket() {}
+  EthPacket(u_char* raw_packet) {
+    assert(raw_packet != nullptr);
+
+    u_char* cursor = raw_packet;
+
+    dmac = mac_packet_t(6, cursor);
+    smac = mac_packet_t(6, &cursor[6]);
+
+    uint16_t type = ntohs(reinterpret_cast<uint16_t&>(cursor[12]));
+    assert(EthType::TYPE_ARP == type);
+    type = EthType::TYPE_ARP;
+  }
   mac_packet_t dmac;
   mac_packet_t smac;
   EthType      type;
@@ -71,17 +85,20 @@ typedef struct EthPacket : packet_t {
   uint32_t     crc;
 } eth_packet_t;
 
+namespace xvzd {
+
 class SendArp {
 public:
-  SendArp()  {};
-  ~SendArp() {}
+  SendArp();
+  ~SendArp();
 
 #ifdef         DEBUG
   void         print(void);
 #endif
   void         init(char *interface, char *sender_ip, char *target_ip);
   char*        to_cstring(void);
-  void         parse(u_char* raw_packet);
+  void         listen(void);
+  void         parse(const u_char* raw_packet);
 
   uint16_t     get_hardware_type(void);
   uint16_t     get_protocol_type(void);
@@ -125,7 +142,7 @@ private:
     token = std::strtok(address, ".");
     do {
       char *tmp;
-      ret.address[i] = std::strtol(token, &tmp, 10);
+      ret.address[i] = std::strtoul(token, &tmp, 10);
       ++i;
     } while ((token = std::strtok(NULL, ",")));
 

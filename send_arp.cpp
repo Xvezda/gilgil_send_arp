@@ -8,6 +8,13 @@ using std::printf;
 using std::fprintf;
 using xvzd::SendArp;
 
+SendArp::SendArp() {
+}
+
+SendArp::~SendArp() {
+  pcap_close(handle);
+}
+
 void SendArp::init(char *interface, char *sender_ip, char *target_ip) {
   this->interface = interface;
 
@@ -34,5 +41,22 @@ char* SendArp::to_cstring() {
   return ret;
 }
 
-void SendArp::parse(u_char* raw_packet) {
+void SendArp::parse(const u_char* raw_packet) {
+  eth_packet_t eth(const_cast<u_char*>(raw_packet));
+}
+
+void SendArp::listen() {
+  if (handle == nullptr) return;
+
+  struct pcap_pkthdr *header;
+  const u_char *raw_packet;
+  int res;
+
+  for (;;) {
+    res = pcap_next_ex(handle, &header, &raw_packet);
+    if (!res) return;
+    if (res == -1 || res == -2) break;
+
+    parse(raw_packet);
+  }
 }
