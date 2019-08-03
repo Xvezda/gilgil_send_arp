@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2019 Xvezda <https://xvezda.com/>
+ */
 #include "send_arp.h"
 
 
@@ -16,7 +19,9 @@ int main(int argc, char **argv) {
   char *target_ip = argv[3];
 
   SendArp s(interface, sender_ip, target_ip);
+#ifdef DEBUG
   s.print();
+#endif
 
   return EXIT_SUCCESS;
 }
