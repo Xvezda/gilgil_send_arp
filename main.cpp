@@ -18,7 +18,9 @@ int main(int argc, char **argv) {
   char *sender_ip = argv[2];
   char *target_ip = argv[3];
 
-  SendArp s(interface, sender_ip, target_ip);
+  //SendArp s(interface, sender_ip, target_ip);
+  SendArp *s = new SendArp();
+  s->init(interface, sender_ip, target_ip);
 #ifdef DEBUG
   s.print();
 #endif
