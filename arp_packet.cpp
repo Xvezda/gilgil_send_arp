@@ -5,7 +5,9 @@
 
 
 using std::vector;
+
 using xvzd::ArpPacket;
+using xvzd::ArpOpCode;
 
 
 template <typename T>

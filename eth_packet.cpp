@@ -7,6 +7,7 @@ using std::vector;
 
 using xvzd::Packet;
 using xvzd::EthPacket;
+using xvzd::EthType;
 
 
 vector<uint8_t> EthPacket::get_dmac() {

@@ -2,6 +2,7 @@
  * Copyright (C) 2019 Xvezda <https://xvezda.com/>
  */
 #include "send_arp.h"
+#include "eth_packet.h"
 
 
 using std::vector;
@@ -11,8 +12,10 @@ using std::fprintf;
 using std::strtok;
 using std::strtoul;
 
+using xvzd::StatusCode;
 using xvzd::Packet;
 using xvzd::EthPacket;
+using xvzd::EthType;
 using xvzd::ArpPacket;
 using xvzd::SendArp;
 
@@ -48,7 +51,7 @@ char* SendArp::to_cstring() {
 
 void SendArp::parse(const u_char* raw_packet) {
   EthPacket eth(const_cast<u_char*>(raw_packet));
-  if (eth.get_type() != EthType::TYPE_ARP) return;
+  if (eth.get_type() != TYPE_ARP) return;
 
   ArpPacket* arp = reinterpret_cast<ArpPacket*>(eth.get_data());
 
