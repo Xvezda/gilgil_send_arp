@@ -5,6 +5,7 @@
 #define _XVZD_STRING_H
 
 
+#include <cstdio>
 #include <cstring>
 #include <cstdlib>
 #include <vector>
@@ -60,6 +61,7 @@ public:
     data = tmp;
     size = len;
   }
+
   ~String() {
     if (data != nullptr) {
       delete[] data;
@@ -70,11 +72,14 @@ public:
   char* to_cstring() {
     return data;
   }
-private:
+protected:
   size_t size;
+private:
   char  *data;
 };
 
 }  // end of namespace
 
+
 #endif  // _XVZD_STRING_H
+

@@ -7,6 +7,7 @@
 
 namespace xvzd {
 
+
 class MacAddress : public AddrPacket {
 public:
   MacAddress(size_t size, u_char *raw_packet)

@@ -3,23 +3,31 @@
  */
 #include "send_arp.h"
 
+
 using std::vector;
 
+using xvzd::get_uint32_t;
 using xvzd::Packet;
 using xvzd::EthPacket;
 using xvzd::EthType;
 
 
-vector<uint8_t> EthPacket::get_dmac() {
-  vector<uint8_t> mac_address;
+vector<uint8_t> get_address(u_char* raw_packet) {
+  vector<uint8_t> address;
+  size_t i;
 
-  return mac_address;
+  for (i = 0; i < 6; ++i) {
+    address.push_back(raw_packet[i]);
+  }
+  return address;
+}
+
+vector<uint8_t> EthPacket::get_dmac() {
+  return get_address(dmac);
 }
 
 vector<uint8_t> EthPacket::get_smac() {
-  vector<uint8_t> mac_address;
-
-  return mac_address;
+  return get_address(smac);
 }
 
 EthType EthPacket::get_type() {

@@ -1,6 +1,8 @@
 #ifndef _PACKET_H
 #define _PACKET_H
 
+#include <arpa/inet.h>
+#include "xvzd_types.h"
 
 namespace xvzd {
 
@@ -23,7 +25,10 @@ public:
   Packet() {}
   Packet(u_char *raw_packet) : data(raw_packet) {}
   ~Packet() {}
+
+  size_t get_size(void);
 protected:
+  size_t  size;
   u_char* data;
 };
 
@@ -31,3 +36,4 @@ protected:
 
 
 #endif  // _PACKET_H
+

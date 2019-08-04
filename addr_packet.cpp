@@ -20,10 +20,7 @@ vector<uint8_t> AddrPacket::get_address() {
       char *tmp;
       ret.push_back(strtoul(token, &tmp, 10));
       ++i;
-    } while ((token = strtok(NULL, ",")));
+    } while ((token = strtok(NULL, ".")));
 
     return ret;
-
 }
-
-

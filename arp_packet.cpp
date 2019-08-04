@@ -13,7 +13,8 @@ using xvzd::ArpOpCode;
 template <typename T>
 vector<uint8_t> get_address(T from, size_t size) {
   vector<uint8_t> address;
-  size_t i;
+  size_t          i;
+
   for (i = 0; i < size; ++i) {
     address.push_back(from[i]);
   }
@@ -62,6 +63,11 @@ ArpOpCode ArpPacket::get_operation() {
   default:
     return ARP_UNKNOWN;
   }
+}
+
+size_t ArpPacket::get_size() {
+  return (get_fixed_header_length()
+      + get_hardware_size() + get_protocol_size());
 }
 
 
