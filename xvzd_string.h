@@ -13,6 +13,13 @@
 
 namespace xvzd {
 
+
+using std::vector;
+
+using std::snprintf;
+using std::strlen;
+using std::memcpy;
+
 class BaseObject {
 public:
   BaseObject() {}
@@ -24,16 +31,20 @@ class String : public BaseObject {
 public:
   String() {}
   String(char* src) {
-    size = std::strlen(src);
+    size = strlen(src);
     data = new char[size+1];
-    std::memcpy(data, src, size);
+
+    memcpy(data, src, size);
+
     data[size] = '\0';
   }
 
-  String(std::vector<uint8_t> arr) {
+  String(vector<uint8_t> arr) {
     char *tmp = nullptr;
+
     size_t len = 0;
     size_t i, offset;
+
     for (i = 0; i < arr.size(); ++i) {
       // Get result length
       len += snprintf(0, 0,

@@ -11,13 +11,11 @@
 #include <cassert>
 #include <stdint.h>
 
-#include <vector>
-
 #include <pcap.h>
 #include <arpa/inet.h>
 
+#include <vector>
 #include "xvzd_string.h"
-using xvzd::String;
 
 
 enum StatusCode : int {
@@ -34,6 +32,7 @@ enum EthType : uint16_t {
 };
 
 enum ArpOpCode : uint16_t {
+  ARP_UNKNOWN = 0x0000,
   ARP_REQUEST = 0x0001,
   ARP_REPLY   = 0x0002
 };
@@ -41,9 +40,20 @@ enum ArpOpCode : uint16_t {
 
 namespace xvzd {
 
+
+using std::vector;
+
 inline void read_cursor(u_char*& cursor, u_char*& target, size_t size) {
   target = cursor;
   cursor += size;
+}
+
+inline uint16_t get_uint32_t(u_char *raw_packet) {
+  return ntohl(reinterpret_cast<uint32_t&>(*raw_packet));
+}
+
+inline uint16_t get_uint16_t(u_char *raw_packet) {
+  return ntohs(reinterpret_cast<uint16_t&>(*raw_packet));
 }
 
 // Base class
@@ -56,34 +66,37 @@ protected:
   u_char* data;
 };
 
-class AddressPacket : public Packet {
+class AddrPacket : public Packet {
 public:
-  AddressPacket(size_t _size, u_char *raw_packet) : size(_size) {
+  AddrPacket(size_t _size, u_char *raw_packet) : size(_size) {
     data = raw_packet;
   };
-  AddressPacket() {}
+  AddrPacket() {}
 
-  std::vector<uint8_t> get_address(void);
+  vector<uint8_t> get_address(void);
   size_t  get_size(void);
 private:
   size_t  size;
 };
 
-class IpAddress : public AddressPacket {
+class IpAddress : public AddrPacket {
 public:
-  IpAddress(size_t size, u_char *raw_packet) : AddressPacket(size, raw_packet) {}
+  IpAddress(size_t size, u_char *raw_packet)
+    : AddrPacket(size, raw_packet) {}
   IpAddress() {};
   ~IpAddress() {}
 };
-class MacAddress : public AddressPacket {
+class MacAddress : public AddrPacket {
 public:
-  MacAddress(size_t size, u_char *raw_packet) : AddressPacket(size, raw_packet) {}
+  MacAddress(size_t size, u_char *raw_packet)
+    : AddrPacket(size, raw_packet) {}
   MacAddress() {};
   ~MacAddress() {}
 };
 
 class ArpPacket : public Packet {
 public:
+
   ArpPacket() {}
   ArpPacket(u_char *raw_packet) {
     assert(raw_packet != nullptr);
@@ -97,32 +110,32 @@ public:
 
     read_cursor(cursor, operation, 2);
 
-    read_cursor(cursor, sender_address, get_hardware_type());
+    read_cursor(cursor, sender_address, get_hardware_size());
     read_cursor(cursor, sender_ip, get_protocol_size());
-    read_cursor(cursor, target_address, get_hardware_type());
+    read_cursor(cursor, target_address, get_hardware_size());
     read_cursor(cursor, target_ip, get_protocol_size());
   }
   ~ArpPacket() {}
 
-  uint16_t             get_hardware_type(void);
-  uint16_t             get_protocol_type(void);
-  uint8_t              get_hardware_size(void);
-  uint8_t              get_protocol_size(void);
-  ArpOpCode            get_operation(void);
-  std::vector<uint8_t> get_sender_address(void);
-  std::vector<uint8_t> get_sender_ip(void);
-  std::vector<uint8_t> get_target_address(void);
-  std::vector<uint8_t> get_target_ip(void);
+  uint16_t        get_hardware_type(void);
+  uint16_t        get_protocol_type(void);
+  uint8_t         get_hardware_size(void);
+  uint8_t         get_protocol_size(void);
+  ArpOpCode       get_operation(void);
+  vector<uint8_t> get_sender_address(void);
+  vector<uint8_t> get_sender_ip(void);
+  vector<uint8_t> get_target_address(void);
+  vector<uint8_t> get_target_ip(void);
 private:
-  u_char*              hardware_type;
-  u_char*              protocol_type;
-  u_char*              hardware_size;
-  u_char*              protocol_size;
-  u_char*              operation;
-  u_char*              sender_address;
-  u_char*              sender_ip;
-  u_char*              target_address;
-  u_char*              target_ip;
+  u_char*         hardware_type;
+  u_char*         protocol_type;
+  u_char*         hardware_size;
+  u_char*         protocol_size;
+  u_char*         operation;
+  u_char*         sender_address;
+  u_char*         sender_ip;
+  u_char*         target_address;
+  u_char*         target_ip;
 };
 
 class EthPacket : public Packet {
@@ -142,16 +155,16 @@ public:
   }
   ~EthPacket() {}
 
-  std::vector<uint8_t> get_dmac(void);
-  std::vector<uint8_t> get_smac(void);
-  EthType              get_type(void);
-  Packet*              get_data(void);
+  vector<uint8_t> get_dmac(void);
+  vector<uint8_t> get_smac(void);
+  EthType         get_type(void);
+  Packet*         get_data(void);
 private:
-  u_char* dmac;
-  u_char* smac;
-  u_char* type;
-  u_char* data;
-  u_char* crc;
+  u_char*         dmac;
+  u_char*         smac;
+  u_char*         type;
+  u_char*         data;
+  u_char*         crc;
 };
 
 
