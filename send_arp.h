@@ -4,23 +4,33 @@
 #ifndef _SEND_ARP_H__
 #define _SEND_ARP_H__
 
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
 #include <stdint.h>
 
+#include <vector>
+
 #include <pcap.h>
 #include <arpa/inet.h>
 
-/*
-#define MAC_UNKNOWN   0x000000000000
-#define MAC_BROADCAST 0xffffffffffff
-*/
+#include "xvzd_string.h"
+using xvzd::String;
+
+
+enum StatusCode : int {
+  STAT_FAILED = -1,
+  STAT_SUCCESS = 0,
+  STAT_ERROR   = 1,
+  STAT_UNKNOWN = 2
+};
 
 enum EthType : uint16_t {
-  TYPE_IPV4 = 0x0800,
-  TYPE_ARP  = 0x0806
+  TYPE_UNKNOWN = 0x0000,
+  TYPE_IPV4    = 0x0800,
+  TYPE_ARP     = 0x0806
 };
 
 enum ArpOpCode : uint16_t {
@@ -28,128 +38,158 @@ enum ArpOpCode : uint16_t {
   ARP_REPLY   = 0x0002
 };
 
-// Base struct
-typedef struct packet {
-} packet_t;
 
-typedef struct ip : packet_t {
-  ip() {}
-  ip(const ip& src) : size(src.size), address(src.address) {}
-  ip(uint8_t size, uint8_t* address) : size(size), address(address) {}
-  ~ip() { delete[] address; }
-  uint8_t  size;
-  uint8_t* address;
-} ip_packet_t;
+namespace xvzd {
 
-typedef struct mac : packet_t {
-  mac() {}
-  mac(uint8_t size, uint8_t* address) : size(size), address(address) {}
-  ~mac() { delete[] address; }
-  uint8_t  size;
-  uint8_t* address;
-} mac_packet_t;
+inline void read_cursor(u_char*& cursor, u_char*& target, size_t size) {
+  target = cursor;
+  cursor += size;
+}
 
-typedef struct ArpPacket : packet_t {
+// Base class
+class Packet {
+public:
+  Packet() {}
+  Packet(u_char *raw_packet) : data(raw_packet) {}
+  ~Packet() {}
+protected:
+  u_char* data;
+};
+
+class AddressPacket : public Packet {
+public:
+  AddressPacket(size_t _size, u_char *raw_packet) : size(_size) {
+    data = raw_packet;
+  };
+  AddressPacket() {}
+
+  std::vector<uint8_t> get_address(void);
+  size_t  get_size(void);
+private:
+  size_t  size;
+};
+
+class IpAddress : public AddressPacket {
+public:
+  IpAddress(size_t size, u_char *raw_packet) : AddressPacket(size, raw_packet) {}
+  IpAddress() {};
+  ~IpAddress() {}
+};
+class MacAddress : public AddressPacket {
+public:
+  MacAddress(size_t size, u_char *raw_packet) : AddressPacket(size, raw_packet) {}
+  MacAddress() {};
+  ~MacAddress() {}
+};
+
+class ArpPacket : public Packet {
+public:
   ArpPacket() {}
-  ArpPacket(u_char* raw_packet) {
-  }
-  uint16_t     hardware_type;
-  uint16_t     protocol_type;
-  uint8_t      hardware_size;
-  uint8_t      protocol_size;
-  ArpOpCode    operation;
-  mac_packet_t sender_address;
-  ip_packet_t  sender_ip;
-  mac_packet_t target_address;
-  ip_packet_t  target_ip;
-} arp_packet_t;
+  ArpPacket(u_char *raw_packet) {
+    assert(raw_packet != nullptr);
 
-typedef struct EthPacket : packet_t {
-  EthPacket() {}
-  EthPacket(u_char* raw_packet) {
+    u_char *cursor = raw_packet;
+
+    read_cursor(cursor, hardware_type, 2);
+    read_cursor(cursor, protocol_type, 2);
+    read_cursor(cursor, hardware_size, 1);
+    read_cursor(cursor, protocol_size, 1);
+
+    read_cursor(cursor, operation, 2);
+
+    read_cursor(cursor, sender_address, get_hardware_type());
+    read_cursor(cursor, sender_ip, get_protocol_size());
+    read_cursor(cursor, target_address, get_hardware_type());
+    read_cursor(cursor, target_ip, get_protocol_size());
+  }
+  ~ArpPacket() {}
+
+  uint16_t             get_hardware_type(void);
+  uint16_t             get_protocol_type(void);
+  uint8_t              get_hardware_size(void);
+  uint8_t              get_protocol_size(void);
+  ArpOpCode            get_operation(void);
+  std::vector<uint8_t> get_sender_address(void);
+  std::vector<uint8_t> get_sender_ip(void);
+  std::vector<uint8_t> get_target_address(void);
+  std::vector<uint8_t> get_target_ip(void);
+private:
+  u_char*              hardware_type;
+  u_char*              protocol_type;
+  u_char*              hardware_size;
+  u_char*              protocol_size;
+  u_char*              operation;
+  u_char*              sender_address;
+  u_char*              sender_ip;
+  u_char*              target_address;
+  u_char*              target_ip;
+};
+
+class EthPacket : public Packet {
+public:
+  EthPacket(u_char *raw_packet) {
     assert(raw_packet != nullptr);
 
     u_char* cursor = raw_packet;
 
-    dmac = mac_packet_t(6, cursor);
-    smac = mac_packet_t(6, &cursor[6]);
+    read_cursor(cursor, dmac, 6);
+    read_cursor(cursor, smac, 6);
 
-    uint16_t type = ntohs(reinterpret_cast<uint16_t&>(cursor[12]));
-    assert(EthType::TYPE_ARP == type);
-    type = EthType::TYPE_ARP;
+    read_cursor(cursor, type, 2);
+
+    // Put all remaining datas
+    data = cursor;
   }
-  mac_packet_t dmac;
-  mac_packet_t smac;
-  EthType      type;
-  packet_t     data;
-  uint32_t     crc;
-} eth_packet_t;
+  ~EthPacket() {}
 
-namespace xvzd {
+  std::vector<uint8_t> get_dmac(void);
+  std::vector<uint8_t> get_smac(void);
+  EthType              get_type(void);
+  Packet*              get_data(void);
+private:
+  u_char* dmac;
+  u_char* smac;
+  u_char* type;
+  u_char* data;
+  u_char* crc;
+};
+
 
 class SendArp {
 public:
   SendArp();
   ~SendArp();
 
-#ifdef         DEBUG
-  void         print(void);
+#ifdef       DEBUG
+  void       print(void);
 #endif
-  void         init(char *interface, char *sender_ip, char *target_ip);
-  char*        to_cstring(void);
-  void         listen(void);
-  void         parse(const u_char* raw_packet);
+  StatusCode init(char *interface, char *sender_ip, char *target_ip);
+  char*      to_cstring(void);
+  void       listen(void);
+  void       parse(const u_char* raw_packet);
 
-  uint16_t     get_hardware_type(void);
-  uint16_t     get_protocol_type(void);
-  uint8_t      get_hardware_size(void);
-  uint8_t      get_protocol_size(void);
-  ArpOpCode    get_operation(void);
-  mac_packet_t get_sender_address(void);
-  ip_packet_t  get_sender_ip(void);
-  mac_packet_t get_target_address(void);
-  ip_packet_t  get_target_ip(void);
+  uint16_t   get_hardware_type(void);
+  uint16_t   get_protocol_type(void);
+  uint8_t    get_hardware_size(void);
+  uint8_t    get_protocol_size(void);
+  ArpOpCode  get_operation(void);
+  MacAddress get_sender_address(void);
+  IpAddress  get_sender_ip(void);
+  MacAddress get_target_address(void);
+  IpAddress  get_target_ip(void);
 
 private:
-  char*        interface;
-  ip_packet_t  sender_ip;
-  ip_packet_t  target_ip;
+  char*     interface;
+  IpAddress sender_ip;
+  IpAddress target_ip;
 
-  pcap_t*      handle;
-  char         errbuf[PCAP_ERRBUF_SIZE];
+  pcap_t*   handle;
+  char      errbuf[PCAP_ERRBUF_SIZE];
 
-  arp_packet_t packet;
-  u_char*      raw_packet;
-
-  ip_packet_t  ip_parser(char* ip_address) {
-    ip_packet_t ret;
-    size_t cnt = 0;
-
-    uint8_t i = 0;
-    char *token, *address = ip_address;
-
-    // Count number of dots
-    for (char* ptr = address; *ptr; ptr++) {
-      if (*ptr == '.') ++cnt;
-    }
-    // Number when tokenized
-    cnt = cnt + 1;
-    // Initialize return object
-    ret.size = cnt;
-    ret.address = new uint8_t[cnt];
-
-    // Tokenize to parse values
-    token = std::strtok(address, ".");
-    do {
-      char *tmp;
-      ret.address[i] = std::strtoul(token, &tmp, 10);
-      ++i;
-    } while ((token = std::strtok(NULL, ",")));
-
-    return ret;
-  }
+  ArpPacket packet;
 };
 
 #endif  // _SEND_ARP_H__
 
-}
+
+}  // end of namespace

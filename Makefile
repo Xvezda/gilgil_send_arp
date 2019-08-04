@@ -2,7 +2,7 @@ CC=g++
 CPP=g++
 TARGET=send_arp
 LDLIBS=-lpcap
-CPPFLAGS=-Wall -std=c++11
+CPPFLAGS=-Wall -std=c++11 -DDEBUG
 
 all: $(TARGET)
 
