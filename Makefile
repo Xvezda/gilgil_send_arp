@@ -1,16 +1,15 @@
 CC=g++
 CPP=g++
-TARGET=send_arp
 LDLIBS=-lpcap
 CPPFLAGS=-Wall -std=c++11 -DDEBUG
 
+TARGET=send_arp
+SOURCES=$(wildcard *.cpp)
+OBJECTS=$(SOURCES:.cpp=.o)
+
 all: $(TARGET)
 
-$(TARGET): main.o send_arp.o
-
-main.o: main.cpp send_arp.h
-
-send_arp.o: send_arp.cpp send_arp.h
+$(TARGET): $(OBJECTS)
 
 clean:
 	rm -f *.o
