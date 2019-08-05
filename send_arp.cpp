@@ -276,7 +276,9 @@ void SendArp::broadcast() {
 
         // Send payload
         for (;;) {
+          printf("[+] Sending payload...\n");
           send(packet, sizeof packet);
+
           sleep(1);
         }
         break;
