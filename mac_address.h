@@ -10,8 +10,8 @@ namespace xvzd {
 
 class MacAddress : public AddrPacket {
 public:
-  MacAddress(size_t size, u_char *raw_packet)
-    : AddrPacket(size, raw_packet) {}
+  MacAddress(u_char *raw_packet, size_t size)
+    : AddrPacket(raw_packet, size) {}
   MacAddress() {};
   ~MacAddress() {}
 };

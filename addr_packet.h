@@ -9,10 +9,7 @@ namespace xvzd {
 
 class AddrPacket : public Packet {
 public:
-  AddrPacket(size_t _size, u_char *raw_packet) {
-    size = _size;
-    data = raw_packet;
-  };
+  AddrPacket(u_char *raw_packet, size_t size) : Packet(raw_packet, size) {};
   AddrPacket() {}
 
   vector<uint8_t> get_address(void);

