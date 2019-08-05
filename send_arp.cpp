@@ -46,9 +46,9 @@ void SendArp::parse(const u_char* raw_packet) {
   EthPacket eth(const_cast<u_char*>(raw_packet));
   if (eth.get_type() != TYPE_ARP) return;
 
+#ifdef DEBUG
   ArpPacket* arp = reinterpret_cast<ArpPacket*>(eth.get_data());
 
-#ifdef DEBUG
   printf("[DEBUG]\n");
   printf("sender_address: %s\n",
       String(arp->get_sender_address()).to_cstr());
