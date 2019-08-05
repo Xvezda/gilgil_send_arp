@@ -5,13 +5,13 @@
 #include "xvzd_types.h"
 
 
-namespace xvzd {
-
-enum EthType : uint16_t {
+enum ProtocolType : uint16_t {
   TYPE_UNKNOWN = 0x0000,
   TYPE_IPV4    = 0x0800,
   TYPE_ARP     = 0x0806
 };
+
+namespace xvzd {
 
 class EthPacket : public Packet {
 public:
@@ -32,7 +32,7 @@ public:
 
   vector<uint8_t> get_dmac(void);
   vector<uint8_t> get_smac(void);
-  EthType         get_type(void);
+  ProtocolType         get_type(void);
   Packet*         get_data(void);
 private:
   u_char*         dmac;

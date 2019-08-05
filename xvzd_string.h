@@ -25,7 +25,7 @@ class BaseObject {
 public:
   BaseObject() {}
   ~BaseObject() {}
-  virtual char* to_cstring() = 0;
+  virtual char* to_cstr() = 0;
 };
 
 class String : public BaseObject {
@@ -69,7 +69,7 @@ public:
     }
   }
 
-  char* to_cstring() {
+  char* to_cstr() {
     return data;
   }
 protected:

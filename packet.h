@@ -23,13 +23,14 @@ inline uint16_t get_uint16_t(u_char *raw_packet) {
 class Packet {
 public:
   Packet() {}
-  Packet(u_char *raw_packet) : data(raw_packet) {}
+  Packet(u_char *raw_packet, size_t _size) : data(raw_packet), size(_size) {}
   ~Packet() {}
 
   size_t get_size(void);
+  size_t to_rawstr(void);
 protected:
-  size_t  size;
   u_char* data;
+  size_t  size;
 };
 
 }  // end of namespace

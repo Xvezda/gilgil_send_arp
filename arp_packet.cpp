@@ -7,7 +7,6 @@
 using std::vector;
 
 using xvzd::ArpPacket;
-using xvzd::ArpOpCode;
 
 
 template <typename T>
@@ -66,7 +65,7 @@ ArpOpCode ArpPacket::get_operation() {
 }
 
 size_t ArpPacket::get_size() {
-  return (get_fixed_header_length()
+  return (ArpPacket::get_fixed_header_size()
       + get_hardware_size() + get_protocol_size());
 }
 

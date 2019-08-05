@@ -9,7 +9,6 @@ using std::vector;
 using xvzd::get_uint32_t;
 using xvzd::Packet;
 using xvzd::EthPacket;
-using xvzd::EthType;
 
 
 vector<uint8_t> get_address(u_char* raw_packet) {
@@ -30,7 +29,7 @@ vector<uint8_t> EthPacket::get_smac() {
   return get_address(smac);
 }
 
-EthType EthPacket::get_type() {
+ProtocolType EthPacket::get_type() {
   uint16_t _type = get_uint16_t(type);
 
   switch (_type) {

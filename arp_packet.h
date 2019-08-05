@@ -5,20 +5,25 @@
 #include "packet.h"
 #include "xvzd_types.h"
 
-
-namespace xvzd {
-
 const size_t HARDWARE_TYPE_SIZE = 2;
 const size_t PROTOCOL_TYPE_SIZE = 2;
 const size_t HARDWARE_ADDR_LEN = 1;
 const size_t PROTOCOL_ADDR_LEN = 1;
 const size_t OPERATION_CODE_SIZE = 2;
 
+
+enum HardWareType : uint16_t {
+  TYPE_ETH = 0x0001
+};
+
 enum ArpOpCode : uint16_t {
   ARP_UNKNOWN = 0x0000,
   ARP_REQUEST = 0x0001,
   ARP_REPLY   = 0x0002
 };
+
+namespace xvzd {
+
 
 class ArpPacket : public Packet {
 public:
@@ -55,6 +60,11 @@ public:
   size_t          get_size(void);
   u_char*         to_rawstring(void);
 
+  static size_t get_fixed_header_size() {
+    return (HARDWARE_TYPE_SIZE + PROTOCOL_TYPE_SIZE + HARDWARE_ADDR_LEN
+        + PROTOCOL_ADDR_LEN + OPERATION_CODE_SIZE);
+  }
+
 private:
   u_char*         hardware_type;
   u_char*         protocol_type;
@@ -65,11 +75,6 @@ private:
   u_char*         sender_ip;
   u_char*         target_address;
   u_char*         target_ip;
-
-  size_t get_fixed_header_length() {
-    return (HARDWARE_TYPE_SIZE + PROTOCOL_TYPE_SIZE + HARDWARE_ADDR_LEN
-        + PROTOCOL_ADDR_LEN + OPERATION_CODE_SIZE);
-  }
 };
 
 }  // end of namespace

@@ -23,7 +23,8 @@ int main(int argc, char **argv) {
   SendArp s = SendArp();
 
   s.init(interface, sender_ip, target_ip);
-  s.listen();
+  //s.listen();
+  s.broadcast();
 
   return EXIT_SUCCESS;
 }

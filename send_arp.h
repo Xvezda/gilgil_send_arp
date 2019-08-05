@@ -25,12 +25,7 @@
 #include "arp_packet.h"
 #include "eth_packet.h"
 
-
-namespace xvzd {
-
-using std::vector;
-using std::memcpy;
-using std::printf;
+#define MTU_SIZE 1500
 
 enum StatusCode : int {
   STAT_FAILED = -1,
@@ -39,26 +34,25 @@ enum StatusCode : int {
   STAT_UNKNOWN = 2
 };
 
+namespace xvzd {
+
+using std::vector;
+using std::memcpy;
+using std::printf;
+
+
 class SendArp {
 public:
   SendArp();
   ~SendArp();
 
   StatusCode init(char *interface, char *sender_ip, char *target_ip);
-  char*      to_cstring(void);
+  char*      to_cstr(void);
   void       listen(void);
   void       parse(const u_char* raw_packet);
   void       send(u_char* packet, size_t size);
-
-  uint16_t   get_hardware_type(void);
-  uint16_t   get_protocol_type(void);
-  uint8_t    get_hardware_size(void);
-  uint8_t    get_protocol_size(void);
-  ArpOpCode  get_operation(void);
-  MacAddress get_sender_address(void);
-  IpAddress  get_sender_ip(void);
-  MacAddress get_target_address(void);
-  IpAddress  get_target_ip(void);
+  Packet*    mimic(u_char* raw_packet, size_t size);
+  void       broadcast(void);
 
   // Figure out my mac address
   // https://stackoverflow.com/a/1779800
@@ -76,6 +70,8 @@ public:
         mac_address[i] = static_cast<u_char>(s.ifr_addr.sa_data[i]);
       }
     }
+    close(fd);
+
     return mac_address;
   }
 
