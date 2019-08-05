@@ -51,7 +51,6 @@ public:
   void       listen(void);
   void       parse(const u_char* raw_packet);
   void       send(u_char* packet, size_t size);
-  Packet*    mimic(u_char* raw_packet, size_t size);
   void       broadcast(void);
 
   // Figure out my mac address

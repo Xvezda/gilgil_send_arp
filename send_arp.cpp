@@ -195,8 +195,3 @@ void SendArp::broadcast() {
   send(packet, sizeof packet);
 }
 
-Packet* SendArp::mimic(u_char* raw_packet, size_t size) {
-  Packet* ret = new Packet(raw_packet, size);
-
-  return ret;
-}
