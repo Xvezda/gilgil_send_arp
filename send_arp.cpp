@@ -189,6 +189,8 @@ void SendArp::broadcast() {
   printf("target_ip: %s\n", String(arp->get_target_ip()).to_cstr());
   printf("-----\n");
   printf("\n");
+
+  delete arp;
 #endif
   send(packet, sizeof packet);
 
@@ -283,6 +285,7 @@ void SendArp::broadcast() {
         }
         break;
       }
+      delete arp;
     }
   }
 }
